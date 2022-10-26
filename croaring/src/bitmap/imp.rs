@@ -92,6 +92,27 @@ impl Bitmap {
         }
     }
 
+    /*#[inline]
+    pub fn add_many_from_iter<I>(&mut self, iter: I)
+    where I: Iterator<Item = u32>
+    {
+        let mut context = ffi::roaring_bulk_context_t {
+            container: 0 as *mut ::libc::c_void,
+            idx: 0,
+            key: 0,
+            typecode: 0
+        };
+        for i in iter {
+            unsafe {
+                ffi::roaring_bitmap_add_bulk(
+                    &mut self.bitmap,
+                    &mut context,
+                    i,
+                )
+            }
+        }
+    }*/
+
     /// Add the integer element to the bitmap
     ///
     /// # Examples
