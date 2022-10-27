@@ -19,8 +19,8 @@ impl Bitmap {
         // the version of croaring.
         const _: () = assert!(
             ffi::ROARING_VERSION_MAJOR == 0
-                && ffi::ROARING_VERSION_MINOR == 5
-                && ffi::ROARING_VERSION_REVISION == 0
+                && ffi::ROARING_VERSION_MINOR == 7
+                && ffi::ROARING_VERSION_REVISION == 1
         );
         ffi::roaring_free(p as *mut _);
         result
@@ -88,11 +88,12 @@ impl Bitmap {
                 &mut self.bitmap,
                 elements.len().try_into().unwrap(),
                 elements.as_ptr(),
+                false,
             )
         }
     }
 
-    /*#[inline]
+    #[inline]
     pub fn add_many_from_iter<I>(&mut self, iter: I)
     where I: Iterator<Item = u32>
     {
@@ -111,7 +112,7 @@ impl Bitmap {
                 )
             }
         }
-    }*/
+    }
 
     /// Add the integer element to the bitmap
     ///
@@ -852,6 +853,16 @@ impl Bitmap {
     pub fn of(elements: &[u32]) -> Self {
         unsafe {
             Self::take_heap(ffi::roaring_bitmap_of_ptr(
+                elements.len().try_into().unwrap(),
+                elements.as_ptr(),
+            ))
+        }
+    }
+
+    #[inline]
+    pub fn of_using_bitsets(elements: &[u32]) -> Self {
+        unsafe {
+            Self::take_heap(ffi::roaring_bitmap_of_ptr_with_bitsets(
                 elements.len().try_into().unwrap(),
                 elements.as_ptr(),
             ))
