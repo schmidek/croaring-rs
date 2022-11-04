@@ -131,6 +131,11 @@ impl Bitmap {
         unsafe { ffi::roaring_bitmap_add(&mut self.bitmap, element) }
     }
 
+    #[inline]
+    pub fn lazy_add(&mut self, element: u32) {
+        unsafe { ffi::roaring_bitmap_lazy_add(&mut self.bitmap, element) }
+    }
+
     /// Add the integer element to the bitmap. Returns true if the value was
     /// added, false if the value was already in the bitmap.
     ///
@@ -466,6 +471,27 @@ impl Bitmap {
     #[inline]
     pub fn or_inplace(&mut self, other: &Self) {
         unsafe { ffi::roaring_bitmap_or_inplace(&mut self.bitmap, &other.bitmap) }
+    }
+
+    #[inline]
+    pub fn lazy_or_inplace(&mut self, other: &Bitmap, force_bitsets: bool) -> &mut Self {
+        unsafe {
+            // Because we have a mutable borrow of the bitmap, `other` cannot be == our bitmap,
+            // so this is always safe
+            ffi::roaring_bitmap_lazy_or_inplace(
+                &mut self.bitmap,
+                &other.bitmap,
+                force_bitsets,
+            );
+        }
+        self
+    }
+
+    #[inline]
+    pub fn repair_after_lazy(&mut self) {
+        unsafe {
+            ffi::roaring_bitmap_repair_after_lazy(&mut self.bitmap);
+        }
     }
 
     /// Computes the union between many bitmaps quickly, as opposed to having
