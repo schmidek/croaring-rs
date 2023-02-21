@@ -1,3 +1,4 @@
+use std::fmt;
 use crate::Bitmap;
 
 pub struct LazyBitmap<'a> {
@@ -147,6 +148,7 @@ impl Bitmap {
     }
 }
 
+#[derive(Clone)]
 pub struct LazyOwnedBitmap {
     bitmap: Bitmap,
 }
@@ -202,5 +204,12 @@ impl std::ops::BitXorAssign<&Bitmap> for LazyOwnedBitmap {
     #[inline]
     fn bitxor_assign(&mut self, other: &Bitmap) {
         self.xor_inplace(other);
+    }
+}
+
+impl fmt::Debug for LazyOwnedBitmap {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        let bitmap = self.clone().into_inner();
+        bitmap.fmt(f)
     }
 }
