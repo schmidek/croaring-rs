@@ -68,5 +68,6 @@ mod ops;
 mod lazy;
 
 pub use crate::bitmap::lazy::LazyBitmap;
+pub use crate::bitmap::lazy::LazyOwnedBitmap;
 pub use crate::bitmap::iter::BitmapIterator;
 pub use crate::bitmap::iter::BitmapIntoIterator;
