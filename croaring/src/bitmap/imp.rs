@@ -7,7 +7,7 @@ use super::{Bitmap, Statistics};
 
 impl Bitmap {
     #[inline]
-    unsafe fn take_heap(p: *mut roaring_bitmap_t) -> Self {
+    pub(crate) unsafe fn take_heap(p: *mut roaring_bitmap_t) -> Self {
         // Based heavily on the `roaring.hh` cpp header from croaring
 
         assert!(!p.is_null());
