@@ -304,8 +304,10 @@ mod tests {
     fn test_lazy_owned() {
         // Perform a series of bitwise operations on a bitmap:
         let bitmap = Bitmap::create();
-        let bitmaps_to_or = [Bitmap::of(&[99]), Bitmap::of(&[1, 2, 5, 10]), Bitmap::create(), Bitmap::of(&[1, 30, 100]), Bitmap::of(&[10001, 10002, 10005, 10010]), Bitmap::of(&[10001, 10030, 10100]), Bitmap::from_range(200000..300000)];
+        let bitmaps_to_or = [Bitmap::of(&[99]), Bitmap::of(&[1, 2, 5, 10]), Bitmap::create(), Bitmap::of(&[1, 30, 100]), Bitmap::of(&[10001, 10002, 10005, 10010]), Bitmap::of(&[10001, 10030, 10100]), Bitmap::from_range(200000..300000), Bitmap::from_range(2000000..3000000)];
         let bitmaps_to_sub = [Bitmap::of(&[5]), Bitmap::of(&[1, 1000, 1001]), Bitmap::of(&[10005]), Bitmap::of(&[10001, 11000, 11001]), Bitmap::from_range(210000..290000)];
+        let and1 = Bitmap::from_range(2100000..2800000);
+        let and2 = Bitmap::from_range(2500000..2900000);
 
         let mut lazy = bitmap.into_lazy();
         for b in bitmaps_to_or.clone().into_iter() {
@@ -314,6 +316,7 @@ mod tests {
         for b in &bitmaps_to_sub {
             lazy -= b;
         }
+        lazy -= &(&and1.clone().into_lazy() & &and2.clone().into_lazy());
         let bitmap = lazy.into_inner();
 
         let mut bitmap2 = Bitmap::of(&[99]);
@@ -323,6 +326,7 @@ mod tests {
         for b in &bitmaps_to_sub {
             bitmap2 -= b;
         }
+        bitmap2 -= &(&and1 & &and2);
         assert_eq!(bitmap, bitmap2);
     }
 
