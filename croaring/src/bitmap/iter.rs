@@ -218,6 +218,7 @@ pub struct BitmapIntoIterator {
     _bitmap: Pin<Box<Bitmap>>,
 }
 
+unsafe impl Send for BitmapIntoIterator {}
 unsafe impl Sync for BitmapIntoIterator {}
 
 impl<'a> BitmapIntoIterator {
