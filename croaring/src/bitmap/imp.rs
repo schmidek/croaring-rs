@@ -1,6 +1,6 @@
 use ffi::roaring_bitmap_t;
 use std::convert::TryInto;
-use std::mem;
+use std::{mem, slice};
 use std::ops::{Bound, RangeBounds};
 
 use super::{Bitmap, Statistics};
@@ -560,6 +560,54 @@ impl Bitmap {
                 bms.as_mut_ptr(),
             ))
         }
+    }
+
+    /// Computes the union between many bitmaps quickly, as opposed to having
+    /// to call or() repeatedly. Returns the result as a new bitmap.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use croaring::Bitmap;
+    ///
+    /// let mut bitmap1 = Bitmap::of(&[15, 25, 35]);
+    /// let mut bitmap2 = Bitmap::of(&[25]);
+    /// let mut bitmap3 = Bitmap::of(&[35]);
+    ///
+    /// let results = Bitmap::and_sub_assign(&mut bitmap1, vec![&mut bitmap2, &mut bitmap3]);
+    /// assert_eq!(results.len(), 2);
+    /// let mut iter = results.into_iter();
+    /// let bitmap4 = iter.next().unwrap();
+    /// let bitmap5 = iter.next().unwrap();
+    /// assert_eq!(bitmap4, Bitmap::of(&[25]));
+    /// assert_eq!(bitmap5, Bitmap::of(&[35]));
+    /// assert_eq!(bitmap1, Bitmap::of(&[15]));
+    /// assert!(bitmap2.is_empty());
+    /// assert!(bitmap3.is_empty());
+    /// ```
+    #[inline]
+    pub fn and_sub_assign(bitmap: &mut Bitmap, others: Vec<&mut Bitmap>) -> Vec<Bitmap> {
+        let bm = &mut bitmap.bitmap as *mut _;
+        let num = others.len();
+        let mut bms: Vec<*mut ffi::roaring_bitmap_s> = others
+            .into_iter()
+            .map(|item| &mut item.bitmap as *mut _)
+            .collect();
+
+        let mut ret = Vec::with_capacity(num);
+        unsafe {
+            let results = ffi::roaring_bitmap_and_andnot_many(
+                bm,
+                num.try_into().unwrap(),
+                bms.as_mut_ptr(),
+            );
+            let data_slice = slice::from_raw_parts(results, num);
+            for rs in data_slice {
+                ret.push(Self::take_heap(*rs));
+            }
+            ffi::roaring_free(results as *mut _);
+        }
+        ret
     }
 
     /// Computes the symmetric difference (xor) between two bitmaps
