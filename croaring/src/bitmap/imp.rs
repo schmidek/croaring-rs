@@ -1385,6 +1385,25 @@ impl Bitmap {
 
         statistics
     }
+
+    /// Returns a bitmap with the containers that have at least one value present
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use croaring::Bitmap;
+    ///
+    /// let bitmap: Bitmap = (65000..70000).collect();
+    /// let container_bitmap = bitmap.container_bitmap();
+    ///
+    /// assert!(container_bitmap.contains(0));
+    /// assert!(container_bitmap.contains(1));
+    /// assert!(!container_bitmap.contains(2));
+    /// ```
+    #[inline]
+    pub fn container_bitmap(&self) -> Self {
+        unsafe { Self::take_heap(ffi::roaring_bitmap_container_bitmap(&self.bitmap)) }
+    }
 }
 
 fn range_to_inclusive<R: RangeBounds<u32>>(range: R) -> (u32, u32) {

@@ -216,6 +216,32 @@ impl LazyOwnedBitmap {
     pub fn is_empty(&self) -> bool {
         unsafe { ffi::roaring_bitmap_is_empty(&self.bitmap.bitmap) }
     }
+
+    /// Returns a bitmap with the containers that have at least one value present
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use croaring::Bitmap;
+    ///
+    /// let bitmap: Bitmap = (65000..70000).collect();
+    /// let lazy = bitmap.into_lazy();
+    /// let container_bitmap = lazy.container_bitmap().into_inner();
+    ///
+    /// assert!(container_bitmap.contains(0));
+    /// assert!(container_bitmap.contains(1));
+    /// assert!(!container_bitmap.contains(2));
+    /// ```
+    #[inline]
+    pub fn container_bitmap(&self) -> Self {
+        LazyOwnedBitmap {
+            bitmap: unsafe {
+                Bitmap::take_heap(ffi::roaring_bitmap_lazy_container_bitmap(
+                    &self.bitmap.bitmap,
+                ))
+            },
+        }
+    }
 }
 
 impl std::ops::BitOrAssign<&Bitmap> for LazyOwnedBitmap {
