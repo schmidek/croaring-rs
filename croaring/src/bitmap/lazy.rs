@@ -288,6 +288,13 @@ impl SubAssign<&Bitmap> for LazyOwnedBitmap {
     }
 }
 
+impl SubAssign<&LazyOwnedBitmap> for LazyOwnedBitmap {
+    #[inline]
+    fn sub_assign(&mut self, other: &LazyOwnedBitmap) {
+        unsafe { ffi::roaring_bitmap_lazy_andnot_inplace(&mut self.bitmap.bitmap, &other.bitmap.bitmap) }
+    }
+}
+
 impl fmt::Debug for LazyOwnedBitmap {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let bitmap = self.clone().into_inner();
