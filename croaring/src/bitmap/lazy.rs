@@ -217,6 +217,23 @@ impl LazyOwnedBitmap {
         unsafe { ffi::roaring_bitmap_is_empty(&self.bitmap.bitmap) }
     }
 
+    /// Contains returns true if the integer element is contained in the bitmap
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use croaring::Bitmap;
+    ///
+    /// let bitmap = Bitmap::of(&[1]).into_lazy();
+    ///
+    /// assert!(bitmap.contains(1));
+    /// assert!(!bitmap.contains(2));
+    /// ```
+    #[inline]
+    pub fn contains(&self, element: u32) -> bool {
+        unsafe { ffi::roaring_bitmap_lazy_contains(&self.bitmap.bitmap, element) }
+    }
+
     /// Returns a bitmap with the containers that have at least one value present
     ///
     /// # Examples
@@ -226,7 +243,7 @@ impl LazyOwnedBitmap {
     ///
     /// let bitmap: Bitmap = (65000..70000).collect();
     /// let lazy = bitmap.into_lazy();
-    /// let container_bitmap = lazy.container_bitmap().into_inner();
+    /// let container_bitmap = lazy.container_bitmap();
     ///
     /// assert!(container_bitmap.contains(0));
     /// assert!(container_bitmap.contains(1));
