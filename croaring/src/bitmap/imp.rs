@@ -853,6 +853,61 @@ impl Bitmap {
         Self::try_deserialize(buffer).unwrap_or_else(Bitmap::create)
     }
 
+    /// Given a serialized bitmap as slice of bytes returns a bitmap instance with only containers whose keys are in container_bitmap
+    /// See example of #serialize function.
+    ///
+    /// On invalid input returns None.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use croaring::Bitmap;
+    ///
+    /// let original_bitmap: Bitmap = (1..150_000).collect();
+    /// let serialized_buffer = original_bitmap.serialize();
+    ///
+    /// let container_bitmap: Bitmap = Bitmap::of(&[0, 2]);
+    ///
+    /// let deserialized_bitmap = Bitmap::try_deserialize_with_container_bitmap(&serialized_buffer, &container_bitmap);
+    /// let expected_bitmap: Bitmap = (1..65536).chain(131_072..150_000).collect();
+    /// assert_eq!(expected_bitmap, deserialized_bitmap.unwrap());
+    ///
+    /// let container_bitmap: Bitmap = Bitmap::of(&[1]);
+    ///
+    /// let deserialized_bitmap = Bitmap::try_deserialize_with_container_bitmap(&serialized_buffer, &container_bitmap);
+    /// let expected_bitmap: Bitmap = (65536..131_072).collect();
+    /// assert_eq!(expected_bitmap, deserialized_bitmap.unwrap());
+    ///
+    /// let invalid_buffer: Vec<u8> = vec![3];
+    /// let deserialized_bitmap = Bitmap::try_deserialize(&invalid_buffer);
+    /// assert!(deserialized_bitmap.is_none());
+    /// ```
+    #[inline]
+    pub fn try_deserialize_with_container_bitmap(buffer: &[u8], container_bitmap: &Bitmap) -> Option<Self> {
+        unsafe {
+            let bitmap = ffi::roaring_bitmap_portable_deserialize_safe_with_container_bitmap(
+                buffer.as_ptr() as *const ::libc::c_char,
+                buffer.len().try_into().unwrap(),
+                &container_bitmap.bitmap,
+            );
+
+            if !bitmap.is_null() {
+                Some(Self::take_heap(bitmap))
+            } else {
+                None
+            }
+        }
+    }
+
+    /// Given a serialized bitmap as slice of bytes returns a bitmap instance.
+    /// See example of #serialize function.
+    ///
+    /// On invalid input returns empty bitmap.
+    #[inline]
+    pub fn deserialize_with_container_bitmap(buffer: &[u8], container_bitmap: &Bitmap) -> Self {
+        Self::try_deserialize_with_container_bitmap(buffer, container_bitmap).unwrap_or_else(Bitmap::create)
+    }
+
     /// Creates a new bitmap from a slice of u32 integers
     ///
     /// # Examples
