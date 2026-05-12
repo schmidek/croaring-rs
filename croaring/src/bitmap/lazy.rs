@@ -259,6 +259,34 @@ impl LazyOwnedBitmap {
             },
         }
     }
+
+    /// Returns a bitmap with the containers that have at least one value present
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use croaring::Bitmap;
+    ///
+    /// let bitmap: Bitmap = (65000..70000).collect();
+    /// let lazy = bitmap.into_lazy();
+    /// let block_max = lazy.block_max(32_768);
+    ///
+    /// assert!(!block_max.contains(0));
+    /// assert!(block_max.contains(1));
+    /// assert!(block_max.contains(2));
+    /// assert!(!block_max.contains(3));
+    /// ```
+    #[inline]
+    pub fn block_max(&self, block_size: u16) -> Self {
+        LazyOwnedBitmap {
+            bitmap: unsafe {
+                Bitmap::take_heap(ffi::roaring_bitmap_lazy_block_max_bitmap(
+                    &self.bitmap.bitmap,
+                    block_size,
+                ))
+            },
+        }
+    }
 }
 
 impl std::ops::BitOrAssign<&Bitmap> for LazyOwnedBitmap {
