@@ -853,6 +853,52 @@ impl Bitmap {
         Self::try_deserialize(buffer).unwrap_or_else(Bitmap::create)
     }
 
+    /// Given a serialized bitmap as slice of bytes returns the cardinality.
+    ///
+    /// On invalid input returns None.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use croaring::Bitmap;
+    ///
+    /// let original_bitmap: Bitmap = (1..5).collect();
+    /// let serialized_buffer = original_bitmap.serialize();
+    ///
+    /// let deserialized_bitmap = Bitmap::try_deserialize_cardinality(&serialized_buffer);
+    /// assert_eq!(original_bitmap.cardinality(), deserialized_bitmap.unwrap());
+    ///
+    /// let invalid_buffer: Vec<u8> = vec![3];
+    /// let deserialized_bitmap = Bitmap::try_deserialize_cardinality(&invalid_buffer);
+    /// assert!(deserialized_bitmap.is_none());
+    /// ```
+    #[inline]
+    pub fn try_deserialize_cardinality(buffer: &[u8]) -> Option<u64> {
+        unsafe {
+            let mut cardinality = 0;
+            let valid = ffi::roaring_bitmap_portable_deserialize_cardinality(
+                buffer.as_ptr() as *const ::libc::c_char,
+                buffer.len().try_into().unwrap(),
+                &mut cardinality,
+            );
+
+            if valid {
+                Some(cardinality)
+            } else {
+                None
+            }
+        }
+    }
+
+    /// Given a serialized bitmap as slice of bytes returns the cardinality.
+    /// See example on #try_deserialize_cardinality function.
+    ///
+    /// On invalid input returns 0.
+    #[inline]
+    pub fn deserialize_cardinality(buffer: &[u8]) -> u64 {
+        Self::try_deserialize_cardinality(buffer).unwrap_or(0)
+    }
+
     /// Creates a new bitmap from a slice of u32 integers
     ///
     /// # Examples
